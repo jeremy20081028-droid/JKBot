@@ -1,7 +1,14 @@
+// server.js
 const express = require('express');
 const line = require('@line/bot-sdk');
 const fs = require('fs');
 const app = express();
+
+// --- 環境變數檢查 ---
+if (!process.env.LINE_CHANNEL_ACCESS_TOKEN || !process.env.LINE_CHANNEL_SECRET) {
+  console.error('請先設定環境變數：LINE_CHANNEL_ACCESS_TOKEN 與 LINE_CHANNEL_SECRET');
+  process.exit(1); // Token 沒設定就直接退出
+}
 
 // LINE Bot 設定
 const config = {
@@ -15,10 +22,15 @@ const client = new line.Client(config);
 let records = [];
 const RECORD_FILE = 'records.json';
 if (fs.existsSync(RECORD_FILE)) {
-  records = JSON.parse(fs.readFileSync(RECORD_FILE));
+  try {
+    records = JSON.parse(fs.readFileSync(RECORD_FILE));
+  } catch (e) {
+    console.error('讀取 records.json 失敗，初始化為空陣列');
+    records = [];
+  }
 }
 
-// 定時檢查提醒（每分鐘一次）
+// --- 定時檢查提醒（每分鐘一次） ---
 setInterval(() => {
   const now = new Date();
   const toNotify = records.filter(r => !r.notified && new Date(r.time) <= now);
@@ -29,10 +41,12 @@ setInterval(() => {
     });
     r.notified = true;
   });
-  fs.writeFileSync(RECORD_FILE, JSON.stringify(records, null, 2));
-}, 60 * 1000); // 1 分鐘
+  if (toNotify.length > 0) {
+    fs.writeFileSync(RECORD_FILE, JSON.stringify(records, null, 2));
+  }
+}, 60 * 1000); // 每分鐘檢查一次
 
-// Webhook
+// --- Webhook ---
 app.post('/webhook', line.middleware(config), (req, res) => {
   Promise.all(req.body.events.map(handleEvent))
     .then(() => res.sendStatus(200))
@@ -42,7 +56,7 @@ app.post('/webhook', line.middleware(config), (req, res) => {
     });
 });
 
-// 處理訊息
+// --- 處理訊息 ---
 async function handleEvent(event) {
   if (event.type !== 'message' || event.message.type !== 'text') return;
 
@@ -98,6 +112,8 @@ async function handleEvent(event) {
   }
 }
 
-app.listen(process.env.PORT || 3000, () => {
-  console.log('奴才小幫手啟動中...');
+// --- 啟動伺服器 ---
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`奴才小幫手啟動中，監聽 PORT ${PORT}...`);
 });
