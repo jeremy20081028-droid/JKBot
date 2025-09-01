@@ -10,7 +10,13 @@ const config = {
 const client = new line.Client(config);
 
 app.post('/webhook', line.middleware(config), (req, res) => {
+  req.body.events.forEach(event => {
+    if (event.type === 'message' && event.message.type === 'text') {
+      client.replyMessage(event.replyToken, { type: 'text', text: '你好！我是小幫手' });
+    }
+  });
   res.sendStatus(200);
 });
+
 
 app.listen(process.env.PORT || 3000);
