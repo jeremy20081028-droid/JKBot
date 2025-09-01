@@ -1,19 +1,12 @@
-// server.js
 const express = require('express');
 const line = require('@line/bot-sdk');
 const fs = require('fs');
 const app = express();
 
-// --- 環境變數檢查 ---
-if (!process.env.LINE_CHANNEL_ACCESS_TOKEN || !process.env.LINE_CHANNEL_SECRET) {
-  console.error('請先設定環境變數：LINE_CHANNEL_ACCESS_TOKEN 與 LINE_CHANNEL_SECRET');
-  process.exit(1);
-}
-
-// LINE Bot 設定
 const config = {
-  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
-  channelSecret: process.env.LINE_CHANNEL_SECRET
+  channelAccessToken: '2IXSwXm3fMcBDHUmOi/eHdNokRUe84zigR987BWZ+4CtR4vvQbd3JBFlETCyvTAlKKk1SpiNq9LzxitLzqHjbMCbq3AS//0y26qSooPP0/fmxv+tn4JhqJHRHs3EozrrtMQCIqZ78fgwhhv7le7bMgdB04t89/1O/w1cDnyilFU=
+', // <-- 填你的 Token
+  channelSecret: 'e9b476b663ac72f72d83c0adb761aa8a'    // <-- 填你的 Secret
 };
 
 const client = new line.Client(config);
@@ -30,7 +23,7 @@ if (fs.existsSync(RECORD_FILE)) {
   }
 }
 
-// --- 定時檢查提醒（每分鐘一次） ---
+// 定時檢查提醒（每分鐘一次）
 setInterval(() => {
   const now = new Date();
   const toNotify = records.filter(r => !r.notified && new Date(r.time) <= now);
@@ -46,7 +39,7 @@ setInterval(() => {
   }
 }, 60 * 1000);
 
-// --- Webhook ---
+// Webhook
 app.post('/webhook', line.middleware(config), (req, res) => {
   Promise.all(req.body.events.map(handleEvent))
     .then(() => res.sendStatus(200))
@@ -56,7 +49,7 @@ app.post('/webhook', line.middleware(config), (req, res) => {
     });
 });
 
-// --- 處理訊息 ---
+// 處理訊息
 async function handleEvent(event) {
   if (event.type !== 'message' || event.message.type !== 'text') return;
 
@@ -72,7 +65,6 @@ async function handleEvent(event) {
   }
 
   // 記錄新活動
-  // 格式: 奴才 記住 活動名稱|YYYY-MM-DD HH:MM
   if (text.startsWith('奴才 記住')) {
     const content = text.replace('奴才 記住', '').trim();
     const [note, timeStr] = content.split('|');
@@ -91,8 +83,7 @@ async function handleEvent(event) {
     });
   }
 
-  // 查紀錄（支援指定關鍵字）
-  // 支援關鍵字：新活動、活動時間、結束時間、獎品
+  // 查紀錄（支援關鍵字）
   if (text.startsWith('奴才 查紀錄')) {
     const keyword = text.replace('奴才 查紀錄', '').trim();
     let filtered = records.filter(r => r.groupId === groupId);
@@ -106,7 +97,6 @@ async function handleEvent(event) {
   }
 
   // 匯入舊訊息
-  // 格式: 奴才 匯入 舊訊息內容|YYYY-MM-DD HH:MM
   if (text.startsWith('奴才 匯入')) {
     const content = text.replace('奴才 匯入', '').trim();
     const [note, timeStr] = content.split('|');
@@ -117,7 +107,7 @@ async function handleEvent(event) {
         text: '格式錯誤，請使用：奴才 匯入 舊訊息內容|YYYY-MM-DD HH:MM'
       });
     }
-    records.push({ groupId, text: note, time: time.toISOString(), notified: true }); // 已過的訊息設為已通知
+    records.push({ groupId, text: note, time: time.toISOString(), notified: true });
     fs.writeFileSync(RECORD_FILE, JSON.stringify(records, null, 2));
     return client.replyMessage(event.replyToken, {
       type: 'text',
@@ -125,7 +115,7 @@ async function handleEvent(event) {
     });
   }
 
-  // 群組有人喊奴才但不是指令，簡單回覆
+  // 回覆喊奴才但不是指令的訊息
   if (text.includes('奴才')) {
     return client.replyMessage(event.replyToken, {
       type: 'text',
@@ -134,7 +124,7 @@ async function handleEvent(event) {
   }
 }
 
-// --- 啟動伺服器 ---
+// 啟動伺服器
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`奴才小幫手啟動中，監聽 PORT ${PORT}...`);
