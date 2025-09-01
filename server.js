@@ -4,9 +4,9 @@ const fs = require('fs');
 const app = express();
 
 const config = {
-  channelAccessToken: '2IXSwXm3fMcBDHUmOi/eHdNokRUe84zigR987BWZ+4CtR4vvQbd3JBFlETCyvTAlKKk1SpiNq9LzxitLzqHjbMCbq3AS//0y26qSooPP0/fmxv+tn4JhqJHRHs3EozrrtMQCIqZ78fgwhhv7le7bMgdB04t89/1O/w1cDnyilFU=
-', // <-- 填你的 Token
-  channelSecret: 'e9b476b663ac72f72d83c0adb761aa8a'    // <-- 填你的 Secret
+  channelAccessToken: "2IXSwXm3fMcBDHUmOi/eHdNokRUe84zigR987BWZ+4CtR4vvQbd3JBFlETCyvTAlKKk1SpiNq9LzxitLzqHjbMCbq3AS//0y26qSooPP0/fmxv+tn4JhqJHRHs3EozrrtMQCIqZ78fgwhhv7le7bMgdB04t89/1O/w1cDnyilFU=
+", // <-- 填你的 Token
+  channelSecret: "e9b476b663ac72f72d83c0adb761aa8a"    // <-- 填你的 Secret
 };
 
 const client = new line.Client(config);
@@ -129,3 +129,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`奴才小幫手啟動中，監聽 PORT ${PORT}...`);
 });
+
